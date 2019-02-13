@@ -1604,10 +1604,10 @@ main(int argc, char **argv)
     char *conf_path = NULL;
     char *iface     = NULL;
 
+    char *local_port  = NULL;
     char *server_port = NULL;
     char *plugin_opts = NULL;
     char *plugin_port = NULL;
-    char tmp_port[8];
 
     int server_num = 0;
     const char *server_host[MAX_REMOTE_NUM];
@@ -1704,6 +1704,9 @@ main(int argc, char **argv)
             break;
         case 'i':
             iface = optarg;
+            break;
+        case 'l':
+            local_port = optarg;
             break;
         case 'd':
             nameservers = optarg;
@@ -1840,13 +1843,11 @@ main(int argc, char **argv)
 #endif
 
     if (plugin != NULL) {
-        uint16_t port = get_local_port();
-        if (port == 0) {
-            FATAL("failed to find a free port");
+        if (local_port == NULL) {
+            FATAL("please use -l to setup ss-server port against plugin port");
         }
-        snprintf(tmp_port, 8, "%d", port);
         plugin_port = server_port;
-        server_port = tmp_port;
+        server_port = local_port;
 
 #ifdef __MINGW32__
         memset(&plugin_watcher, 0, sizeof(plugin_watcher));
@@ -2010,9 +2011,9 @@ main(int argc, char **argv)
         for (int i = 0; i < server_num; i++) {
             const char *host = server_host[i];
 
-            if (plugin != NULL) {
-                host = "127.0.0.1";
-            }
+//            if (plugin != NULL) {
+//                host = "127.0.0.1";
+//            }
 
             if (host && ss_is_ipv6addr(host))
                 LOGI("tcp server listening at [%s]:%s", host, server_port);
